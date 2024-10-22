@@ -64,6 +64,8 @@ for i_episode in range(num_episodes):
                 best_i_episode = i_episode
             break
 
+    env.W.save_mode = True
+    env.W.show_mode = False
     if i_episode % 10 == 0 or i_episode == num_episodes - 1:
         env.W.analyzer.print_simple_stats(force_print=True)
         env.W.analyzer.macroscopic_fundamental_diagram()
@@ -78,4 +80,5 @@ for i_episode in range(num_episodes):
         plt.xlabel("episode")
         plt.ylabel("average delay (s)")
         plt.grid()
-        plt.show()
+        plt.savefig("log_epi_average_delay.png")
+        # plt.show()

@@ -139,12 +139,6 @@ class TrafficSim(gym.Env):
         self.log_state = []
         self.log_reward = []
 
-        # prevent frequent reset
-        self.current_time = 0
-        self.intersections_num = 4
-        self.minimum_phase_change_interval = 90
-        self.last_phase_change_time = [0 for i in range(self.intersections_num)]
-
         return observation, None
 
     def comp_state(self):
