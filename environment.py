@@ -199,8 +199,19 @@ class TrafficSim(gym.Env):
         observation = np.array(self.comp_state())
 
         # compute reward
+        reward = 0
+
         n_queue_veh = self.comp_n_veh_queue()
-        reward = -(n_queue_veh - n_queue_veh_old)
+        delta_n_queue_veh = n_queue_veh - n_queue_veh_old
+        total_vehicle = 0
+        for l in self.INLINKS:
+            total_vehicle += l.num_vehicles
+        if total_vehicle == 0:
+            delta_queue_veh_ratio = 0
+        else:
+            delta_queue_veh_ratio = delta_n_queue_veh / total_vehicle
+        # print(f"delta_queue_veh_ratio: {delta_queue_veh_ratio}")
+        reward += -delta_queue_veh_ratio * 100
 
         # check termination
         done = False
