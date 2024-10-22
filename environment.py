@@ -50,8 +50,8 @@ class TrafficSim(gym.Env):
         W = World(
             name="",
             deltan=5,
-            # tmax=4000,
-            tmax=500,
+            tmax=4000,
+            # tmax=500,
             print_mode=0,
             save_mode=0,
             show_mode=1,
@@ -156,6 +156,10 @@ class TrafficSim(gym.Env):
         self.log_state = []
         self.log_reward = []
 
+        # signal phases
+        self.current_step = 0
+        self.last_phase_change_time = [0 for _ in range(self.intersections_num)]
+
         return observation, None
 
     def comp_state(self):
@@ -176,6 +180,7 @@ class TrafficSim(gym.Env):
         """
         proceed env by 1 step = `operation_timestep_width` seconds
         """
+        self.current_step += 1
         operation_timestep_width = 10
 
         n_queue_veh_old = self.comp_n_veh_queue()
@@ -185,10 +190,24 @@ class TrafficSim(gym.Env):
         binstr = f"{action_index:04b}"
 
         # set signal
+        signal_points = 0
+        max_point = 30
         for i in range(self.intersections_num):
-            self.intersections[i].signal_phase = int(
-                binstr[self.intersections_num - i - 1]
-            )
+            new_phase = int(binstr[self.intersections_num - i - 1])
+            new_time = self.current_step * operation_timestep_width
+            point = 0
+            if new_phase != self.intersections[i].signal_phase:
+                delta_time = new_time - self.last_phase_change_time[i]
+                self.last_phase_change_time[i] = new_time
+                if delta_time < max_point:
+                    point = delta_time / max_point
+                elif delta_time < 2 * max_point:
+                    point = 1
+                elif delta_time < 3 * max_point:
+                    point = 1 - (delta_time - 2 * max_point) / max_point
+                signal_points += point
+                # print(f"point: {point}, delta_time: {delta_time}")
+            self.intersections[i].signal_phase = new_phase
             self.intersections[i].signal_t = 0
 
         # traffic dynamics. execute simulation for `operation_timestep_width` seconds
@@ -210,8 +229,9 @@ class TrafficSim(gym.Env):
             delta_queue_veh_ratio = 0
         else:
             delta_queue_veh_ratio = delta_n_queue_veh / total_vehicle
-        # print(f"delta_queue_veh_ratio: {delta_queue_veh_ratio}")
         reward += -delta_queue_veh_ratio * 100
+
+        reward += (signal_points / self.intersections_num) * 100
 
         # check termination
         done = False
