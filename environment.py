@@ -27,12 +27,15 @@ class TrafficSim(gym.Env):
         reward: negative of difference of total waiting vehicles
         """
 
+        # consts
+        self.intersections_num = 4
+
         # action
-        self.n_action = 2**4
+        self.n_action = 2**self.intersections_num
         self.action_space = gym.spaces.Discrete(self.n_action)
 
         # state
-        self.n_state = 4 * 4
+        self.n_state = self.intersections_num * self.intersections_num
         low = np.array([0 for i in range(self.n_state)])
         high = np.array([100 for i in range(self.n_state)])
         self.observation_space = gym.spaces.Box(low=low, high=high)
@@ -59,10 +62,11 @@ class TrafficSim(gym.Env):
 
         # network definition
         inf = float("inf")
-        I1 = W.addNode("I1", 0, 0, signal=[inf, inf])
-        I2 = W.addNode("I2", 1, 0, signal=[inf, inf])
-        I3 = W.addNode("I3", 0, -1, signal=[inf, inf])
-        I4 = W.addNode("I4", 1, -1, signal=[inf, inf])
+        self.intersections = []
+        self.intersections.append(W.addNode("I1", 0, 0, signal=[inf, inf]))
+        self.intersections.append(W.addNode("I2", 1, 0, signal=[inf, inf]))
+        self.intersections.append(W.addNode("I3", 0, -1, signal=[inf, inf]))
+        self.intersections.append(W.addNode("I4", 1, -1, signal=[inf, inf]))
         W1 = W.addNode("W1", -1, 0)
         W2 = W.addNode("W2", -1, -1)
         E1 = W.addNode("E1", 2, 0)
@@ -72,7 +76,14 @@ class TrafficSim(gym.Env):
         S1 = W.addNode("S1", 0, -2)
         S2 = W.addNode("S2", 1, -2)
         # E <-> W direction: signal group 0
-        for n1, n2 in [[W1, I1], [I1, I2], [I2, E1], [W2, I3], [I3, I4], [I4, E2]]:
+        for n1, n2 in [
+            [W1, self.intersections[0]],
+            [self.intersections[0], self.intersections[1]],
+            [self.intersections[1], E1],
+            [W2, self.intersections[2]],
+            [self.intersections[2], self.intersections[3]],
+            [self.intersections[3], E2],
+        ]:
             W.addLink(
                 n1.name + n2.name,
                 n1,
@@ -92,7 +103,14 @@ class TrafficSim(gym.Env):
                 signal_group=0,
             )
         # N <-> S direction: signal group 1
-        for n1, n2 in [[N1, I1], [I1, I3], [I3, S1], [N2, I2], [I2, I4], [I4, S2]]:
+        for n1, n2 in [
+            [N1, self.intersections[0]],
+            [self.intersections[0], self.intersections[2]],
+            [self.intersections[2], S1],
+            [N2, self.intersections[1]],
+            [self.intersections[1], self.intersections[3]],
+            [self.intersections[3], S2],
+        ]:
             W.addLink(
                 n1.name + n2.name,
                 n1,
@@ -121,16 +139,15 @@ class TrafficSim(gym.Env):
 
         # store UXsim object for later re-use
         self.W = W
-        self.I1 = I1
-        self.I2 = I2
-        self.I3 = I3
-        self.I4 = I4
-        self.INLINKS = (
-            list(self.I1.inlinks.values())
-            + list(self.I2.inlinks.values())
-            + list(self.I3.inlinks.values())
-            + list(self.I4.inlinks.values())
-        )
+        # self.INLINKS = (
+        #     list(self.I1.inlinks.values())
+        #     + list(self.I2.inlinks.values())
+        #     + list(self.I3.inlinks.values())
+        #     + list(self.I4.inlinks.values())
+        # )
+        self.INLINKS = list()
+        for i in range(self.intersections_num):
+            self.INLINKS += list(self.intersections[i].inlinks.values())
 
         # initial observation
         observation = np.array([0 for i in range(self.n_state)])
@@ -166,21 +183,13 @@ class TrafficSim(gym.Env):
         # change signal by action
         # decode action
         binstr = f"{action_index:04b}"
-        new_i1, new_i2, new_i3, new_i4 = (
-            int(binstr[3]),
-            int(binstr[2]),
-            int(binstr[1]),
-            int(binstr[0]),
-        )
 
-        self.I1.signal_phase = new_i1
-        self.I1.signal_t = 0
-        self.I2.signal_phase = new_i2
-        self.I2.signal_t = 0
-        self.I3.signal_phase = new_i3
-        self.I3.signal_t = 0
-        self.I4.signal_phase = new_i4
-        self.I4.signal_t = 0
+        # set signal
+        for i in range(self.intersections_num):
+            self.intersections[i].signal_phase = int(
+                binstr[self.intersections_num - i - 1]
+            )
+            self.intersections[i].signal_t = 0
 
         # traffic dynamics. execute simulation for `operation_timestep_width` seconds
         if self.W.check_simulation_ongoing():

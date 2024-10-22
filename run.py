@@ -7,7 +7,7 @@ import copy
 
 from dqn import *
 
-num_episodes = 200
+num_episodes = 100
 # num_episodes = 1
 
 log_states = []
@@ -80,5 +80,5 @@ for i_episode in range(num_episodes):
         plt.xlabel("episode")
         plt.ylabel("average delay (s)")
         plt.grid()
-        plt.savefig("log_epi_average_delay.png")
+        plt.savefig("out/log_epi_average_delay.png")
         # plt.show()
