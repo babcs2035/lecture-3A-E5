@@ -1,4 +1,3 @@
-import os
 import matplotlib.pyplot as plt
 from itertools import count
 import torch
@@ -7,7 +6,7 @@ import copy
 
 from dqn import *
 
-num_episodes = 200
+num_episodes = 100
 # num_episodes = 1
 
 log_states = []
@@ -70,7 +69,9 @@ for i_episode in range(num_episodes):
         env.W.analyzer.print_simple_stats(force_print=True)
         env.W.analyzer.macroscopic_fundamental_diagram()
         env.W.analyzer.time_space_diagram_traj_links(
-            [["W1I1", "I1I2", "I2E1"], ["N1I1", "I1I3", "I3S1"]], figsize=(12, 3)
+            [["W1I1", "I1I2", "I2E1"], ["N1I1", "I1I3", "I3S1"]],
+            figsize=(12, 3),
+            xlim=[3500, 4000],
         )
         for t in list(range(0, env.W.TMAX, int(env.W.TMAX / 4))):
             env.W.analyzer.network(t, detailed=1, network_font_size=0, figsize=(3, 3))
@@ -80,5 +81,5 @@ for i_episode in range(num_episodes):
         plt.xlabel("episode")
         plt.ylabel("average delay (s)")
         plt.grid()
-        plt.savefig("log_epi_average_delay.png")
+        plt.savefig("out/log_epi_average_delay.png")
         # plt.show()
