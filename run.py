@@ -6,7 +6,6 @@ import copy
 
 from dqn import *
 
-import sys
 
 # 再帰の深さを設定する
 sys.setrecursionlimit(10**9)  # 2000に設定
@@ -79,7 +78,7 @@ for i_episode in range(num_episodes):
         env.W.analyzer.print_simple_stats(force_print=True)
         env.W.analyzer.macroscopic_fundamental_diagram()
         env.W.analyzer.time_space_diagram_traj_links(
-            [["W1I1", "I1I2", "I2I3", "I3E1"], ["N1I1", "I1I4", "I4I7", "I7S1"]],
+            [["W1I1", "I1I2", "I2E1"], ["N1I1", "I1I3", "I3S1"]],
             figsize=(12, 3),
             xlim=[3500, 4000],
         )
