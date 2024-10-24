@@ -220,8 +220,10 @@ class TrafficSim(gym.Env):
         # compute reward
         reward = 0
 
+        ## reward 1: negative ratio of difference of total waiting vehicles
         n_queue_veh = self.comp_n_veh_queue()
         delta_n_queue_veh = n_queue_veh - n_queue_veh_old
+        # reward += -delta_n_queue_veh
         total_vehicle = 0
         for l in self.INLINKS:
             total_vehicle += l.num_vehicles
@@ -231,7 +233,8 @@ class TrafficSim(gym.Env):
             delta_queue_veh_ratio = delta_n_queue_veh / total_vehicle
         reward += -delta_queue_veh_ratio * 100
 
-        reward += (signal_points / self.intersections_num) * 100
+        ## reward 2: signal points
+        # reward += (signal_points / self.intersections_num) * 100
 
         # check termination
         done = False

@@ -6,7 +6,7 @@ import copy
 
 from dqn import *
 
-num_episodes = 100
+num_episodes = 1000
 # num_episodes = 1
 
 log_states = []
@@ -61,6 +61,8 @@ for i_episode in range(num_episodes):
                 best_average_delay = env.W.analyzer.average_delay
                 best_W = copy.deepcopy(env.W)
                 best_i_episode = i_episode
+            else:
+                print("")
             break
 
     env.W.save_mode = True
@@ -76,10 +78,9 @@ for i_episode in range(num_episodes):
         for t in list(range(0, env.W.TMAX, int(env.W.TMAX / 4))):
             env.W.analyzer.network(t, detailed=1, network_font_size=0, figsize=(3, 3))
 
-        plt.figure(figsize=(4, 3))
-        plt.plot(log_epi_average_delay, "r.")
-        plt.xlabel("episode")
-        plt.ylabel("average delay (s)")
-        plt.grid()
-        plt.savefig("out/log_epi_average_delay.png")
-        # plt.show()
+    plt.figure(figsize=(16, 9))
+    plt.plot(log_epi_average_delay, "r.")
+    plt.xlabel("episode")
+    plt.ylabel("average delay (s)")
+    plt.grid()
+    plt.savefig("out/log_epi_average_delay.png")
