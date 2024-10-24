@@ -6,7 +6,7 @@ import copy
 
 from dqn import *
 
-num_episodes = 1000
+num_episodes = 2048
 # num_episodes = 1
 
 log_states = []
@@ -63,22 +63,31 @@ for i_episode in range(num_episodes):
                 best_average_delay = env.W.analyzer.average_delay
                 best_W = copy.deepcopy(env.W)
                 best_i_episode = i_episode
+
+                env.W.save_mode = True
+                env.W.show_mode = False
+                env.W.analyzer.print_simple_stats(force_print=True)
+                env.W.analyzer.macroscopic_fundamental_diagram()
+                env.W.analyzer.time_space_diagram_traj_links(
+                    [["W1I1", "I1I2", "I2E1"], ["N1I1", "I1I3", "I3S1"]],
+                    figsize=(12, 3),
+                    xlim=[3500, 4000],
+                )
+                for t in list(range(0, env.W.TMAX, int(env.W.TMAX / 4))):
+                    env.W.analyzer.network(
+                        t, detailed=1, network_font_size=0, figsize=(4, 4)
+                    )
+                plt.figure(figsize=(8, 6))
+                plt.plot(log_epi_average_delay, "r.")
+                plt.xlabel("episode")
+                plt.ylabel("average delay (s)")
+                plt.grid()
+                plt.savefig("out/log_epi_average_delay.png")
             else:
                 print("")
             break
 
-    env.W.save_mode = True
-    env.W.show_mode = False
     if i_episode % 10 == 0 or i_episode == num_episodes - 1:
-        env.W.analyzer.print_simple_stats(force_print=True)
-        env.W.analyzer.macroscopic_fundamental_diagram()
-        env.W.analyzer.time_space_diagram_traj_links(
-            [["W1I1", "I1I2", "I2E1"], ["N1I1", "I1I3", "I3S1"]],
-            figsize=(12, 3),
-            xlim=[3500, 4000],
-        )
-        for t in list(range(0, env.W.TMAX, int(env.W.TMAX / 4))):
-            env.W.analyzer.network(t, detailed=1, network_font_size=0, figsize=(4, 4))
         plt.figure(figsize=(8, 6))
         plt.plot(log_epi_average_delay, "r.")
         plt.xlabel("episode")
