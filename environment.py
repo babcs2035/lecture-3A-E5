@@ -245,7 +245,6 @@
 #         return observation, reward, done, {}, None
 
 
-
 import gymnasium as gym
 import random
 from uxsim import *
@@ -255,18 +254,16 @@ import itertools
 class TrafficSim(gym.Env):
     def __init__(self):
         """
-        複雑な都市環境をシミュレートするための環境を定義します。
+        拡張されたネットワークを持つ環境を定義します。
         """
-        # グリッドサイズの設定
-        self.grid_size = 5  # 5x5のグリッド
-        self.num_intersections = self.grid_size * self.grid_size  # 交差点の数
 
-        # アクションスペースの定義（信号フェーズの組み合わせ）
-        self.n_action = 2 ** self.num_intersections
+        # アクションスペースの定義
+        self.n_intersections = 9  # 交差点の数を9に拡張
+        self.n_action = 2 ** self.n_intersections
         self.action_space = gym.spaces.Discrete(self.n_action)
 
-        # 状態スペースの定義（各リンクの待ち車両数）
-        self.n_state = self.num_intersections * 4  # 各交差点に接続する4つのリンク
+        # ステートスペースの定義
+        self.n_state = self.n_intersections * 4  # 各交差点に接続する4つの入力リンク
         low = np.zeros(self.n_state)
         high = np.full(self.n_state, 100)
         self.observation_space = gym.spaces.Box(low=low, high=high)
@@ -277,117 +274,120 @@ class TrafficSim(gym.Env):
         """
         環境をリセットします。
         """
-        seed = None  # ランダムシード
+        seed = None  # 需要が常にランダムかどうか
         W = World(
-            name="Tokyo",
+            name="",
             deltan=5,
-            tmax=3600,
+            # tmax=4000,
+            tmax=500,
             print_mode=0,
             save_mode=0,
-            show_mode=0,
+            show_mode=1,
             random_seed=seed,
             duo_update_time=600,
         )
         random.seed(seed)
 
-        # ノードとリンクの生成
-        self.intersections = {}
-        self.INLINKS = []
-        node_map = {}
+        # ネットワークの定義
+        inf = float("inf")
+        # 既存のノード
+        I1 = W.addNode("I1", 0, 0, signal=[inf, inf])
+        I2 = W.addNode("I2", 1, 0, signal=[inf, inf])
+        I3 = W.addNode("I3", 0, -1, signal=[inf, inf])
+        I4 = W.addNode("I4", 1, -1, signal=[inf, inf])
+        W1 = W.addNode("W1", -1, 0)
+        W2 = W.addNode("W2", -1, -1)
+        E1 = W.addNode("E1", 2, 0)
+        E2 = W.addNode("E2", 2, -1)
+        N1 = W.addNode("N1", 0, 1)
+        N2 = W.addNode("N2", 1, 1)
+        S1 = W.addNode("S1", 0, -2)
+        S2 = W.addNode("S2", 1, -2)
 
-        # ノードの作成
-        for i in range(self.grid_size):
-            for j in range(self.grid_size):
-                node_name = f"I_{i}_{j}"
-                node = W.addNode(node_name, i, j, signal=[float('inf'), float('inf')])
-                self.intersections[node_name] = node
-                node_map[(i, j)] = node
+        # 新たに追加するノード
+        I5 = W.addNode("I5", 2, 0, signal=[inf, inf])
+        I6 = W.addNode("I6", 2, -1, signal=[inf, inf])
+        I7 = W.addNode("I7", 0, -2, signal=[inf, inf])
+        I8 = W.addNode("I8", 1, -2, signal=[inf, inf])
+        I9 = W.addNode("I9", 2, -2, signal=[inf, inf])
 
-        # 境界ノードの作成
-        boundary_nodes = []
-        for i in range(self.grid_size):
-            # 上端
-            node = W.addNode(f"N_{i}", i, self.grid_size)
-            boundary_nodes.append(node)
-            node_map[(i, self.grid_size)] = node
-            # 下端
-            node = W.addNode(f"S_{i}", i, -1)
-            boundary_nodes.append(node)
-            node_map[(i, -1)] = node
+        W3 = W.addNode("W3", -1, -2)
+        E3 = W.addNode("E3", 3, 0)
+        E4 = W.addNode("E4", 3, -1)
+        E5 = W.addNode("E5", 3, -2)
+        N3 = W.addNode("N3", 2, 1)
+        S3 = W.addNode("S3", 2, -3)
 
-        for j in range(self.grid_size):
-            # 左端
-            node = W.addNode(f"W_{j}", -1, j)
-            boundary_nodes.append(node)
-            node_map[(-1, j)] = node
-            # 右端
-            node = W.addNode(f"E_{j}", self.grid_size, j)
-            boundary_nodes.append(node)
-            node_map[(self.grid_size, j)] = node
+        # リンクの定義
+        # E <-> W 方向: 信号グループ 0
+        EW_links = [
+            (W1, I1), (I1, I2), (I2, I5), (I5, E1),
+            (W2, I3), (I3, I4), (I4, I6), (I6, E2),
+            (W3, I7), (I7, I8), (I8, I9), (I9, E5),
+        ]
+        for n1, n2 in EW_links:
+            W.addLink(
+                n1.name + n2.name,
+                n1,
+                n2,
+                length=500,
+                free_flow_speed=10,
+                jam_density=0.2,
+                signal_group=0,
+            )
+            W.addLink(
+                n2.name + n1.name,
+                n2,
+                n1,
+                length=500,
+                free_flow_speed=10,
+                jam_density=0.2,
+                signal_group=0,
+            )
 
-        # リンクの作成
-        for i in range(-1, self.grid_size + 1):
-            for j in range(-1, self.grid_size + 1):
-                current_node = node_map.get((i, j))
-                if current_node:
-                    # 東方向へのリンク
-                    east_node = node_map.get((i + 1, j))
-                    if east_node:
-                        W.addLink(
-                            f"{current_node.name}_{east_node.name}",
-                            current_node,
-                            east_node,
-                            length=500,
-                            free_flow_speed=10,
-                            jam_density=0.2,
-                            signal_group=0,
-                        )
-                        W.addLink(
-                            f"{east_node.name}_{current_node.name}",
-                            east_node,
-                            current_node,
-                            length=500,
-                            free_flow_speed=10,
-                            jam_density=0.2,
-                            signal_group=0,
-                        )
-                    # 北方向へのリンク
-                    north_node = node_map.get((i, j + 1))
-                    if north_node:
-                        W.addLink(
-                            f"{current_node.name}_{north_node.name}",
-                            current_node,
-                            north_node,
-                            length=500,
-                            free_flow_speed=10,
-                            jam_density=0.2,
-                            signal_group=1,
-                        )
-                        W.addLink(
-                            f"{north_node.name}_{current_node.name}",
-                            north_node,
-                            current_node,
-                            length=500,
-                            free_flow_speed=10,
-                            jam_density=0.2,
-                            signal_group=1,
-                        )
+        # N <-> S 方向: 信号グループ 1
+        NS_links = [
+            (N1, I1), (I1, I3), (I3, I7), (I7, S1),
+            (N2, I2), (I2, I4), (I4, I8), (I8, S2),
+            (N3, I5), (I5, I6), (I6, I9), (I9, S3),
+        ]
+        for n1, n2 in NS_links:
+            W.addLink(
+                n1.name + n2.name,
+                n1,
+                n2,
+                length=500,
+                free_flow_speed=10,
+                jam_density=0.2,
+                signal_group=1,
+            )
+            W.addLink(
+                n2.name + n1.name,
+                n2,
+                n1,
+                length=500,
+                free_flow_speed=10,
+                jam_density=0.2,
+                signal_group=1,
+            )
 
-        # 需要の定義
+        # ランダム需要の定義
         dt = 30
-        demand = 0.15
+        demand = 0.22
+        boundary_nodes = [W1, W2, W3, E1, E2, E5, N1, N2, N3, S1, S2, S3]
         for n1, n2 in itertools.permutations(boundary_nodes, 2):
             for t in range(0, 3600, dt):
                 W.adddemand(n1, n2, t, t + dt, random.uniform(0, demand))
 
-        # 信号交差点の入力リンクを収集
-        for node in self.intersections.values():
+        # UXsimオブジェクトを保存
+        self.W = W
+        self.intersections = [I1, I2, I3, I4, I5, I6, I7, I8, I9]
+        self.INLINKS = []
+        for node in self.intersections:
             self.INLINKS.extend(list(node.inlinks.values()))
 
-        self.W = W
-
         # 初期観測
-        observation = np.zeros(self.n_state)
+        observation = np.array([0 for i in range(self.n_state)])
 
         # ログ
         self.log_state = []
@@ -399,10 +399,10 @@ class TrafficSim(gym.Env):
         """
         現在の状態を計算します。
         """
-        vehicles_per_links = []
+        vehicles_per_links = {}
         for l in self.INLINKS:
-            vehicles_per_links.append(l.num_vehicles_queue)
-        return vehicles_per_links
+            vehicles_per_links[l] = l.num_vehicles_queue
+        return list(vehicles_per_links.values())
 
     def comp_n_veh_queue(self):
         return sum(self.comp_state())
@@ -416,15 +416,9 @@ class TrafficSim(gym.Env):
         n_queue_veh_old = self.comp_n_veh_queue()
 
         # アクションのデコード
-        binstr = format(action_index, f'0{self.num_intersections}b')
-        binstr_length = len(binstr)
-        for idx, node_name in enumerate(self.intersections):
-            # インデックスがバイナリ文字列の長さを超えないようにする
-            if idx < binstr_length:
-                phase = int(binstr[-(idx + 1)])
-            else:
-                phase = 0  # デフォルト値
-            node = self.intersections[node_name]
+        binstr = f"{action_index:0{self.n_intersections}b}"
+        for idx, node in enumerate(self.intersections):
+            phase = int(binstr[-(idx + 1)])
             node.signal_phase = phase
             node.signal_t = 0
 
@@ -440,7 +434,9 @@ class TrafficSim(gym.Env):
         reward = -(n_queue_veh - n_queue_veh_old)
 
         # 終了条件の確認
-        done = not self.W.check_simulation_ongoing()
+        done = False
+        if not self.W.check_simulation_ongoing():
+            done = True
 
         # ログ
         self.log_state.append(observation)
