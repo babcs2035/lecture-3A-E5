@@ -55,7 +55,9 @@ for i_episode in range(num_episodes):
 
         if done:
             log_epi_average_delay.append(env.W.analyzer.average_delay)
-            print(f"{i_episode}:[{env.W.analyzer.average_delay : .3f}]", end=" ")
+            print(
+                f"episode {i_episode}: [{env.W.analyzer.average_delay : .3f}]", end=" "
+            )
             if env.W.analyzer.average_delay < best_average_delay:
                 print("current best episode!")
                 best_average_delay = env.W.analyzer.average_delay
@@ -78,7 +80,7 @@ for i_episode in range(num_episodes):
         for t in list(range(0, env.W.TMAX, int(env.W.TMAX / 4))):
             env.W.analyzer.network(t, detailed=1, network_font_size=0, figsize=(3, 3))
 
-    plt.figure(figsize=(16, 9))
+    plt.figure(figsize=(8, 6))
     plt.plot(log_epi_average_delay, "r.")
     plt.xlabel("episode")
     plt.ylabel("average delay (s)")
