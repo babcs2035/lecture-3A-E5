@@ -13,5 +13,5 @@
 
 ```bash
 $ pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu116
-$ srun -p v -t 60:00 --gres=gpu:4 --pty python run.py # 60 分間，GPU 2 基を確保
+$ srun -p v --gres=gpu:4 --pty python run.py
 ```
