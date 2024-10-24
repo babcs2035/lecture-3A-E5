@@ -429,9 +429,24 @@ class TrafficSim(gym.Env):
         # 状態の観測
         observation = np.array(self.comp_state())
 
-        # 報酬の計算
+        # compute reward
+        reward = 0
+
+        ## reward 1: negative ratio of difference of total waiting vehicles
         n_queue_veh = self.comp_n_veh_queue()
-        reward = -(n_queue_veh - n_queue_veh_old)
+        delta_n_queue_veh = n_queue_veh - n_queue_veh_old
+        # reward += -delta_n_queue_veh
+        total_vehicle = 0
+        for l in self.INLINKS:
+            total_vehicle += l.num_vehicles
+        if total_vehicle == 0:
+            delta_queue_veh_ratio = 0
+        else:
+            delta_queue_veh_ratio = delta_n_queue_veh / total_vehicle
+        reward += -delta_queue_veh_ratio * 100
+
+        ## reward 2: signal points
+        # reward += (signal_points / self.intersections_num) * 100
 
         # 終了条件の確認
         done = False
