@@ -278,8 +278,8 @@ class TrafficSim(gym.Env):
         W = World(
             name="",
             deltan=5,
-            # tmax=4000,
-            tmax=500,
+            tmax=4000,
+            #tmax=500,
             print_mode=0,
             save_mode=0,
             show_mode=1,
@@ -293,37 +293,32 @@ class TrafficSim(gym.Env):
         # 既存のノード
         I1 = W.addNode("I1", 0, 0, signal=[inf, inf])
         I2 = W.addNode("I2", 1, 0, signal=[inf, inf])
-        I3 = W.addNode("I3", 0, -1, signal=[inf, inf])
-        I4 = W.addNode("I4", 1, -1, signal=[inf, inf])
-        W1 = W.addNode("W1", -1, 0)
-        W2 = W.addNode("W2", -1, -1)
-        E1 = W.addNode("E1", 2, 0)
-        E2 = W.addNode("E2", 2, -1)
-        N1 = W.addNode("N1", 0, 1)
-        N2 = W.addNode("N2", 1, 1)
-        S1 = W.addNode("S1", 0, -2)
-        S2 = W.addNode("S2", 1, -2)
-
-        # 新たに追加するノード
-        I5 = W.addNode("I5", 2, 0, signal=[inf, inf])
+        I3 = W.addNode("I3", 2, 0, signal=[inf, inf])
+        I4 = W.addNode("I4", 0, -1, signal=[inf, inf])
+        I5 = W.addNode("I5", 1, -1, signal=[inf, inf])
         I6 = W.addNode("I6", 2, -1, signal=[inf, inf])
         I7 = W.addNode("I7", 0, -2, signal=[inf, inf])
         I8 = W.addNode("I8", 1, -2, signal=[inf, inf])
         I9 = W.addNode("I9", 2, -2, signal=[inf, inf])
-
+        W1 = W.addNode("W1", -1, 0)
+        W2 = W.addNode("W2", -1, -1)
         W3 = W.addNode("W3", -1, -2)
-        E3 = W.addNode("E3", 3, 0)
-        E4 = W.addNode("E4", 3, -1)
-        E5 = W.addNode("E5", 3, -2)
+        E1 = W.addNode("E1", 3, 0)
+        E2 = W.addNode("E2", 3, -1)
+        E3 = W.addNode("E3", 3, -2)
+        N1 = W.addNode("N1", 0, 1)
+        N2 = W.addNode("N2", 1, 1)
         N3 = W.addNode("N3", 2, 1)
+        S1 = W.addNode("S1", 0, -3)
+        S2 = W.addNode("S2", 1, -3)
         S3 = W.addNode("S3", 2, -3)
 
         # リンクの定義
         # E <-> W 方向: 信号グループ 0
         EW_links = [
-            (W1, I1), (I1, I2), (I2, I5), (I5, E1),
-            (W2, I3), (I3, I4), (I4, I6), (I6, E2),
-            (W3, I7), (I7, I8), (I8, I9), (I9, E5),
+            (W1, I1), (I1, I2), (I2, I3), (I3, E1),
+            (W2, I4), (I4, I5), (I5, I6), (I6, E2),
+            (W3, I7), (I7, I8), (I8, I9), (I9, E3),
         ]
         for n1, n2 in EW_links:
             W.addLink(
@@ -347,9 +342,9 @@ class TrafficSim(gym.Env):
 
         # N <-> S 方向: 信号グループ 1
         NS_links = [
-            (N1, I1), (I1, I3), (I3, I7), (I7, S1),
-            (N2, I2), (I2, I4), (I4, I8), (I8, S2),
-            (N3, I5), (I5, I6), (I6, I9), (I9, S3),
+            (N1, I1), (I1, I4), (I4, I7), (I7, S1),
+            (N2, I2), (I2, I5), (I5, I8), (I8, S2),
+            (N3, I3), (I3, I6), (I6, I9), (I9, S3),
         ]
         for n1, n2 in NS_links:
             W.addLink(
@@ -374,7 +369,7 @@ class TrafficSim(gym.Env):
         # ランダム需要の定義
         dt = 30
         demand = 0.22
-        boundary_nodes = [W1, W2, W3, E1, E2, E5, N1, N2, N3, S1, S2, S3]
+        boundary_nodes = [W1, W2, W3, E1, E2, E3, N1, N2, N3, S1, S2, S3]
         for n1, n2 in itertools.permutations(boundary_nodes, 2):
             for t in range(0, 3600, dt):
                 W.adddemand(n1, n2, t, t + dt, random.uniform(0, demand))
