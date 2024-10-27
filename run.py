@@ -6,7 +6,7 @@ import copy
 
 from dqn import *
 
-num_episodes = 1000
+num_episodes = 50
 # num_episodes = 1
 
 log_states = []

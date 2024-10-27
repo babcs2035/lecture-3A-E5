@@ -220,6 +220,9 @@ class TrafficSim(gym.Env):
         # compute reward
         reward = 0
 
+        '''
+        #pattern 1: change of the number of the waiting car + short signal
+
         ## reward 1: negative ratio of difference of total waiting vehicles
         n_queue_veh = self.comp_n_veh_queue()
         delta_n_queue_veh = n_queue_veh - n_queue_veh_old
@@ -235,7 +238,25 @@ class TrafficSim(gym.Env):
 
         ## reward 2: signal points
         # reward += (signal_points / self.intersections_num) * 100
+        '''
 
+        
+        #pattern 2: pressure
+        pressure = 0
+        for i in range(self.intersections_num):#i is checking node
+            self.INLINKS_press = list(self.intersections[i].inlinks.values())
+            self.OUTLINKS_press = list(self.intersections[i].outlinks.values())
+            for l1 in self.INLINKS_press:
+                j = l1.start_node#j->i is checking line
+                in_press = l1.num_vehicles_queue
+                out_press = 0
+                for l2 in self.OUTLINKS_press:
+                    if l2.name.endswith(j.name) == 0:
+                        out_press += l2.num_vehicles_queue
+                in_press *= 3
+                pressure += abs(in_press - out_press)
+        reward -= (pressure/100)
+    
         # check termination
         done = False
         if self.W.check_simulation_ongoing() == False:
