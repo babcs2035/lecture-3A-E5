@@ -7,7 +7,6 @@ import torch.optim as optim
 import torch.nn.functional as F
 from uxsim import *
 import random
-
 from environment import *
 
 env = TrafficSim()

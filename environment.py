@@ -3,6 +3,10 @@ import random
 from uxsim import *
 import random
 import itertools
+import sys
+
+args = sys.argv
+rewards_num = [int(i) for i in args[1:]]
 
 
 class TrafficSim(gym.Env):
@@ -218,7 +222,9 @@ class TrafficSim(gym.Env):
         observation = np.array(self.comp_state())
 
         # compute reward
+        total_rewards = 2
         reward = 0
+        rewards = [0 for _ in range(total_rewards)]
 
         ## reward 1: negative ratio of difference of total waiting vehicles
         n_queue_veh = self.comp_n_veh_queue()
@@ -231,10 +237,12 @@ class TrafficSim(gym.Env):
             delta_queue_veh_ratio = 0
         else:
             delta_queue_veh_ratio = delta_n_queue_veh / total_vehicle
-        reward += -delta_queue_veh_ratio * 100
+        rewards[0] = -delta_queue_veh_ratio * 100
 
         ## reward 2: signal points
-        # reward += (signal_points / self.intersections_num) * 100
+        rewards[1] = (signal_points / self.intersections_num) * 100
+
+        reward = sum([rewards[a - 1] for a in rewards_num])
 
         # check termination
         done = False

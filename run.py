@@ -3,10 +3,19 @@ from itertools import count
 import torch
 from uxsim import *
 import copy
-
+import sys
+import os
 from dqn import *
 
-num_episodes = 2048
+args = sys.argv
+num_array = [int(i) for i in args[1:]]
+savefile_prefix = "_reward" + "".join([str(i) for i in num_array])
+os.makedirs(f"./out{savefile_prefix}", exist_ok=True)
+print("rewards:", num_array)
+print("savefile_prefix:", savefile_prefix)
+# sys.stdout = open(f"./out{savefile_prefix}/.out", "w")
+
+num_episodes = 1024
 # num_episodes = 1
 
 log_states = []
@@ -66,6 +75,7 @@ for i_episode in range(num_episodes):
 
                 env.W.save_mode = True
                 env.W.show_mode = False
+                env.W.name = savefile_prefix
                 env.W.analyzer.print_simple_stats(force_print=True)
                 env.W.analyzer.macroscopic_fundamental_diagram()
                 env.W.analyzer.time_space_diagram_traj_links(
@@ -82,7 +92,7 @@ for i_episode in range(num_episodes):
                 plt.xlabel("episode")
                 plt.ylabel("average delay (s)")
                 plt.grid()
-                plt.savefig("out/log_epi_average_delay.png")
+                plt.savefig(f"out{savefile_prefix}/log_epi_average_delay.png")
             else:
                 print("")
             break
@@ -93,4 +103,4 @@ for i_episode in range(num_episodes):
         plt.xlabel("episode")
         plt.ylabel("average delay (s)")
         plt.grid()
-        plt.savefig("out/log_epi_average_delay.png")
+        plt.savefig(f"out{savefile_prefix}/log_epi_average_delay.png")
