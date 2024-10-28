@@ -259,8 +259,8 @@ class TrafficSim(gym.Env):
                 pressure += abs(in_press - out_press)
         rewards[2] = -pressure / 50
 
-        print(rewards)
-        reward = sum([rewards[a] for a in rewards_num])
+        # print(rewards)
+        reward = sum([rewards[a - 1] for a in rewards_num])
 
         # check termination
         done = False
