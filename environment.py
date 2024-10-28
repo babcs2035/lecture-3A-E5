@@ -21,7 +21,7 @@ class TrafficSim(gym.Env):
         self.action_space = gym.spaces.Discrete(self.n_action)
 
         # state
-        self.n_state = 30  # number of links (15) * 2
+        self.n_state = 41  # number of links (15) * 2 + 11
         low = np.array([0 for i in range(self.n_state)])
         high = np.array([100 for i in range(self.n_state)])
         self.observation_space = gym.spaces.Box(low=low, high=high)
@@ -61,6 +61,19 @@ class TrafficSim(gym.Env):
         self.intersections.append(W.addNode("I9", 2, -3, signal=[inf, inf]))
         self.intersections.append(W.addNode("I10", 3, -3, signal=[inf, inf]))
 
+        self.nodes = []
+        self.nodes.append(W.addNode("N0", 0, -1, signal=[inf, inf]))
+        self.nodes.append(W.addNode("N1", 1, -1, signal=[inf, inf]))
+        self.nodes.append(W.addNode("N2", 2, -1, signal=[inf, inf]))
+        self.nodes.append(W.addNode("N3", 3, -1, signal=[inf, inf]))
+        self.nodes.append(W.addNode("E3", 4, 0, signal=[inf, inf]))
+        self.nodes.append(W.addNode("E7", 4, 2, signal=[inf, inf]))
+        self.nodes.append(W.addNode("E10", 4, 3, signal=[inf, inf]))
+        self.nodes.append(W.addNode("S10", 3, 4, signal=[inf, inf]))
+        self.nodes.append(W.addNode("S9", 2, 4, signal=[inf, inf]))
+        self.nodes.append(W.addNode("S8", 0, 4, signal=[inf, inf]))
+        self.nodes.append(W.addNode("W8", -1, 3, signal=[inf, inf]))
+
         # makelink
         is_first_row = True
         with open("dat.csv") as f:
@@ -79,14 +92,39 @@ class TrafficSim(gym.Env):
                     int(row[5]),
                     int(row[6]),
                 )
-
+        #makelink_node
+        is_first_row = True
+        with open("dat2.csv") as f:
+            reader = csv.reader(f)
+            for row in reader:
+                if is_first_row:
+                    is_first_row = False
+                    continue
+                self.make_link(
+                    W,
+                    self.intersections[int(row[0])],
+                    self.nodes[int(row[1])],
+                    int(row[2]),
+                    int(row[3]),
+                    int(row[4]),
+                    int(row[5]),
+                    int(row[6]),
+                )
         # random demand definition
         dt = 30
         demand = 0.22
+        '''
         intersections_ = []
         for I in self.intersections:
             if I.name != "I5" and I.name != "I6":
                 intersections_.append(I)
+        for n1, n2 in itertools.permutations(intersections_, 2):
+            for t in range(0, 3600, dt):
+                W.adddemand(n1, n2, t, t + dt, random.uniform(0, demand))
+        '''
+        intersections_ = []
+        for I in self.nodes:
+            intersections_.append(I)
         for n1, n2 in itertools.permutations(intersections_, 2):
             for t in range(0, 3600, dt):
                 W.adddemand(n1, n2, t, t + dt, random.uniform(0, demand))
@@ -201,7 +239,7 @@ class TrafficSim(gym.Env):
                         out_press += l2.num_vehicles_queue
                 out_press /= len(self.INLINKS_press) - 1
                 pressure += abs(in_press - out_press)
-        rewards[2] = -pressure / 50
+        rewards[2] = -pressure / 100
 
         # print(rewards)
         reward = sum([rewards[a - 1] for a in rewards_num])
