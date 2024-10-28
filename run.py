@@ -82,11 +82,17 @@ for i_episode in range(num_episodes):
                 env.W.name = savefile_prefix
                 env.W.analyzer.print_simple_stats(force_print=True)
                 env.W.analyzer.macroscopic_fundamental_diagram()
-                # env.W.analyzer.time_space_diagram_traj_links(
-                #     [["W1I1", "I1I2", "I2E1"], ["N1I1", "I1I3", "I3S1"]],
-                #     figsize=(48, 3),
-                #     # xlim=[3500, 4000],
-                # )
+                env.W.analyzer.time_space_diagram_traj_links(
+                    [
+                        ["I0I4", "I4I8"],
+                        ["I2I5", "I5I6", "I6I9"],
+                        ["I3I7", "I7I10"],
+                        ["I0I1", "I1I2", "I2I3"],
+                        ["I4I6", "I6I7"],
+                        ["I8I9", "I9I10"],
+                    ],
+                    figsize=(48, 3),
+                )
                 for t in list(range(0, env.W.TMAX, int(env.W.TMAX / 4))):
                     env.W.analyzer.network(
                         t, detailed=1, network_font_size=0, figsize=(4, 4)
