@@ -73,9 +73,9 @@ class TrafficSim(gym.Env):
         self.nodes.append(W.addNode("E3", 1737, 1800 - 363, signal=[inf, inf]))
         self.nodes.append(W.addNode("E7", 1870, 1800 - 911, signal=[inf, inf]))
         self.nodes.append(W.addNode("E10", 2176, 1800 - 1669, signal=[inf, inf]))
-        self.nodes.append(W.addNode("S10", 2126, 1800 - 1719, signal=[inf, inf]))
-        self.nodes.append(W.addNode("S9", 1529, 1800 - 1778, signal=[inf, inf]))
-        self.nodes.append(W.addNode("S8", 1080, 1800 - 1705, signal=[inf, inf]))
+        self.nodes.append(W.addNode("S10", 2126, 1800 - 1719, signal=[0, inf]))
+        self.nodes.append(W.addNode("S9", 1529, 1800 - 1778, signal=[0, inf]))
+        self.nodes.append(W.addNode("S8", 1080, 1800 - 1705, signal=[0, inf]))
         self.nodes.append(W.addNode("W8", 1030, 1800 - 1655, signal=[inf, inf]))
 
         # makelink
@@ -116,7 +116,7 @@ class TrafficSim(gym.Env):
                 )
         # random demand definition
         dt = 30
-        demand = 0.22
+        demand = 0.18
         """
         intersections_ = []
         for I in self.intersections:
@@ -149,6 +149,7 @@ class TrafficSim(gym.Env):
         # signal phases
         self.current_step = 0
         self.last_phase_change_time = [0 for _ in range(self.intersections_num)]
+        self.n_queue_veh_old = self.comp_n_veh_queue()
 
         return observation, None
 
@@ -172,8 +173,6 @@ class TrafficSim(gym.Env):
         """
         self.current_step += 1
         operation_timestep_width = 10
-
-        n_queue_veh_old = self.comp_n_veh_queue()
 
         # change signal by action
         # decode action
@@ -214,8 +213,7 @@ class TrafficSim(gym.Env):
         rewards = [0 for _ in range(total_rewards)]
 
         ## reward 1: negative ratio of difference of total waiting vehicles
-        n_queue_veh = self.comp_n_veh_queue()
-        delta_n_queue_veh = n_queue_veh - n_queue_veh_old
+        delta_n_queue_veh = self.comp_n_veh_queue() - self.n_queue_veh_old
         # reward += -delta_n_queue_veh
         total_vehicle = 0
         for l in self.INLINKS:
@@ -224,7 +222,8 @@ class TrafficSim(gym.Env):
             delta_queue_veh_ratio = 0
         else:
             delta_queue_veh_ratio = delta_n_queue_veh / total_vehicle
-        rewards[0] = -delta_queue_veh_ratio * 100
+        self.n_queue_veh_old = self.comp_n_veh_queue()
+        rewards[0] = -delta_queue_veh_ratio * 10000
 
         ## reward 2: signal points
         rewards[1] = (signal_points / self.intersections_num) * 100
@@ -243,9 +242,9 @@ class TrafficSim(gym.Env):
                         out_press += l2.num_vehicles_queue
                 out_press /= len(self.INLINKS_press) - 1
                 pressure += abs(in_press - out_press)
-        rewards[2] = -pressure / 100
+        rewards[2] = -pressure
 
-        # print(rewards)
+        print(rewards)
         reward = sum([rewards[a - 1] for a in rewards_num])
 
         # check termination
@@ -276,7 +275,7 @@ class TrafficSim(gym.Env):
             n2,
             length=length_0,
             free_flow_speed=free_flow_speed_0,
-            jam_density=jam_density_0 * 0.2,
+            jam_density=jam_density_0 * 0.3,
             signal_group=signal_group_a,
         )
         W.addLink(
@@ -285,6 +284,6 @@ class TrafficSim(gym.Env):
             n1,
             length=length_0,
             free_flow_speed=free_flow_speed_0,
-            jam_density=jam_density_0 * 0.2,
+            jam_density=jam_density_0 * 0.3,
             signal_group=signal_group_b,
         )

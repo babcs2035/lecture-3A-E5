@@ -108,7 +108,7 @@ for i_episode in range(num_episodes):
                 print("")
             break
 
-    if i_episode % 10 == 0 or i_episode == num_episodes - 1:
+    if i_episode % 5 == 0 or i_episode == num_episodes - 1:
         plt.figure(figsize=(8, 6))
         plt.plot(log_epi_average_delay, "r.")
         plt.xlabel("episode")
