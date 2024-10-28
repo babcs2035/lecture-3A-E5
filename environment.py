@@ -21,7 +21,7 @@ class TrafficSim(gym.Env):
         self.action_space = gym.spaces.Discrete(self.n_action)
 
         # state
-        self.n_state = self.intersections_num * self.intersections_num
+        self.n_state = 30  # number of links (15) * 2
         low = np.array([0 for i in range(self.n_state)])
         high = np.array([100 for i in range(self.n_state)])
         self.observation_space = gym.spaces.Box(low=low, high=high)
@@ -203,7 +203,7 @@ class TrafficSim(gym.Env):
                 pressure += abs(in_press - out_press)
         rewards[2] = -pressure / 50
 
-        print(rewards)
+        # print(rewards)
         reward = sum([rewards[a - 1] for a in rewards_num])
 
         # check termination

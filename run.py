@@ -5,7 +5,11 @@ from uxsim import *
 import copy
 import sys
 import os
+import resource
 from dqn import *
+
+resource.setrlimit(resource.RLIMIT_STACK, (-1, -1))
+sys.setrecursionlimit(1000000)
 
 args = sys.argv
 num_array = [int(i) for i in args[1:]]
@@ -83,10 +87,10 @@ for i_episode in range(num_episodes):
                 #     figsize=(48, 3),
                 #     # xlim=[3500, 4000],
                 # )
-                # for t in list(range(0, env.W.TMAX, int(env.W.TMAX / 4))):
-                #     env.W.analyzer.network(
-                #         t, detailed=1, network_font_size=0, figsize=(4, 4)
-                #     )
+                for t in list(range(0, env.W.TMAX, int(env.W.TMAX / 4))):
+                    env.W.analyzer.network(
+                        t, detailed=1, network_font_size=0, figsize=(4, 4)
+                    )
                 plt.figure(figsize=(8, 6))
                 plt.plot(log_epi_average_delay, "r.")
                 plt.xlabel("episode")
