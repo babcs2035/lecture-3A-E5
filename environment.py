@@ -255,11 +255,12 @@ class TrafficSim(gym.Env):
                 for l2 in self.OUTLINKS_press:
                     if l2.name.endswith(j.name) == 0:
                         out_press += l2.num_vehicles_queue
-                in_press *= 3
+                out_press /= len(self.INKINKS_press) - 1
                 pressure += abs(in_press - out_press)
-        rewards[2] = -pressure / 100
+        rewards[2] = -pressure / 50
 
-        reward = sum([rewards[a - 1] for a in rewards_num])
+        print(rewards)
+        reward = sum([rewards[a] for a in rewards_num])
 
         # check termination
         done = False
