@@ -84,12 +84,12 @@ for i_episode in range(num_episodes):
                 env.W.analyzer.macroscopic_fundamental_diagram()
                 env.W.analyzer.time_space_diagram_traj_links(
                     [
-                        ["I0I4", "I4I8"],
-                        ["I2I5", "I5I6", "I6I9"],
-                        ["I3I7", "I7I10"],
-                        ["I0I1", "I1I2", "I2I3"],
-                        ["I4I6", "I6I7"],
-                        ["I8I9", "I9I10"],
+                        ["N0I0", "I0I4", "I4I8", "I8S8"],
+                        ["N2I2", "I2I5", "I5I6", "I6I9", "I9S9"],
+                        ["N3I3", "I3I7", "I7I10", "I10S10"],
+                        ["N0I0", "I0I1", "I1I2", "I2I3", "I3E3"],
+                        ["I4I6", "I6I7", "I7E7"],
+                        ["W8I8", "I8I9", "I9I10", "I10E10"],
                     ],
                     figsize=(48, 3),
                 )

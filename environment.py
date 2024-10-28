@@ -66,17 +66,17 @@ class TrafficSim(gym.Env):
                 )
 
         self.nodes = []
-        self.nodes.append(W.addNode("N0", 0, -1, signal=[inf, inf]))
-        self.nodes.append(W.addNode("N1", 1, -1, signal=[inf, inf]))
-        self.nodes.append(W.addNode("N2", 2, -1, signal=[inf, inf]))
-        self.nodes.append(W.addNode("N3", 3, -1, signal=[inf, inf]))
-        self.nodes.append(W.addNode("E3", 4, 0, signal=[inf, inf]))
-        self.nodes.append(W.addNode("E7", 4, 2, signal=[inf, inf]))
-        self.nodes.append(W.addNode("E10", 4, 3, signal=[inf, inf]))
-        self.nodes.append(W.addNode("S10", 3, 4, signal=[inf, inf]))
-        self.nodes.append(W.addNode("S9", 2, 4, signal=[inf, inf]))
-        self.nodes.append(W.addNode("S8", 0, 4, signal=[inf, inf]))
-        self.nodes.append(W.addNode("W8", -1, 3, signal=[inf, inf]))
+        self.nodes.append(W.addNode("N0", 880, 1800 - 770, signal=[inf, inf]))
+        self.nodes.append(W.addNode("N1", 978, 1800 - 486, signal=[inf, inf]))
+        self.nodes.append(W.addNode("N2", 1054, 1800 - 454, signal=[inf, inf]))
+        self.nodes.append(W.addNode("N3", 1687, 1800 - 313, signal=[inf, inf]))
+        self.nodes.append(W.addNode("E3", 1737, 1800 - 363, signal=[inf, inf]))
+        self.nodes.append(W.addNode("E7", 1870, 1800 - 911, signal=[inf, inf]))
+        self.nodes.append(W.addNode("E10", 2176, 1800 - 1669, signal=[inf, inf]))
+        self.nodes.append(W.addNode("S10", 2126, 1800 - 1719, signal=[inf, inf]))
+        self.nodes.append(W.addNode("S9", 1529, 1800 - 1778, signal=[inf, inf]))
+        self.nodes.append(W.addNode("S8", 1080, 1800 - 1705, signal=[inf, inf]))
+        self.nodes.append(W.addNode("W8", 1030, 1800 - 1655, signal=[inf, inf]))
 
         # makelink
         is_first_row = True
