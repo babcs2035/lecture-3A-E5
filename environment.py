@@ -3,6 +3,7 @@ import random
 from uxsim import *
 import random
 import itertools
+import csv
 
 
 class TrafficSim(gym.Env):
@@ -28,7 +29,7 @@ class TrafficSim(gym.Env):
         """
 
         # consts
-        self.intersections_num = 4
+        self.intersections_num = 11
 
         # action
         self.n_action = 2**self.intersections_num
@@ -41,6 +42,7 @@ class TrafficSim(gym.Env):
         self.observation_space = gym.spaces.Box(low=low, high=high)
 
         self.reset()
+
 
     def reset(self):
         """
@@ -63,77 +65,32 @@ class TrafficSim(gym.Env):
         # network definition
         inf = float("inf")
         self.intersections = []
-        self.intersections.append(W.addNode("I1", 0, 0, signal=[inf, inf]))
-        self.intersections.append(W.addNode("I2", 1, 0, signal=[inf, inf]))
-        self.intersections.append(W.addNode("I3", 0, -1, signal=[inf, inf]))
-        self.intersections.append(W.addNode("I4", 1, -1, signal=[inf, inf]))
-        W1 = W.addNode("W1", -1, 0)
-        W2 = W.addNode("W2", -1, -1)
-        E1 = W.addNode("E1", 2, 0)
-        E2 = W.addNode("E2", 2, -1)
-        N1 = W.addNode("N1", 0, 1)
-        N2 = W.addNode("N2", 1, 1)
-        S1 = W.addNode("S1", 0, -2)
-        S2 = W.addNode("S2", 1, -2)
-        # E <-> W direction: signal group 0
-        for n1, n2 in [
-            [W1, self.intersections[0]],
-            [self.intersections[0], self.intersections[1]],
-            [self.intersections[1], E1],
-            [W2, self.intersections[2]],
-            [self.intersections[2], self.intersections[3]],
-            [self.intersections[3], E2],
-        ]:
-            W.addLink(
-                n1.name + n2.name,
-                n1,
-                n2,
-                length=500,
-                free_flow_speed=10,
-                jam_density=0.2,
-                signal_group=0,
-            )
-            W.addLink(
-                n2.name + n1.name,
-                n2,
-                n1,
-                length=500,
-                free_flow_speed=10,
-                jam_density=0.2,
-                signal_group=0,
-            )
-        # N <-> S direction: signal group 1
-        for n1, n2 in [
-            [N1, self.intersections[0]],
-            [self.intersections[0], self.intersections[2]],
-            [self.intersections[2], S1],
-            [N2, self.intersections[1]],
-            [self.intersections[1], self.intersections[3]],
-            [self.intersections[3], S2],
-        ]:
-            W.addLink(
-                n1.name + n2.name,
-                n1,
-                n2,
-                length=500,
-                free_flow_speed=10,
-                jam_density=0.2,
-                signal_group=1,
-            )
-            W.addLink(
-                n2.name + n1.name,
-                n2,
-                n1,
-                length=500,
-                free_flow_speed=10,
-                jam_density=0.2,
-                signal_group=1,
-            )
+        self.intersections.append(W.addNode("I0", 0, 0, signal=[inf, inf]))
+        self.intersections.append(W.addNode("I1", 1, 0, signal=[inf, inf]))
+        self.intersections.append(W.addNode("I2", 2, 0, signal=[inf, inf]))
+        self.intersections.append(W.addNode("I3", 3, 0, signal=[inf, inf]))
+        self.intersections.append(W.addNode("I4", 0, -2, signal=[inf, inf]))
+        self.intersections.append(W.addNode("I5", 2, -1, signal=[inf, inf]))
+        self.intersections.append(W.addNode("I6", 2, -2, signal=[inf, inf]))
+        self.intersections.append(W.addNode("I7", 3, -2, signal=[inf, inf]))
+        self.intersections.append(W.addNode("I8", 0, -3, signal=[inf, inf]))
+        self.intersections.append(W.addNode("I9", 2, -3, signal=[inf, inf]))
+        self.intersections.append(W.addNode("I10", 3, -3, signal=[inf, inf]))
+        
+        #makelink
+        with open('dat.csv') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                self.make_link(self, W, row[0], row[1], row[2], row[3], row[4], row[5], row[6])
 
         # random demand definition
         dt = 30
         demand = 0.22
-        for n1, n2 in itertools.permutations([W1, W2, E1, E2, N1, N2, S1, S2], 2):
+        intersections_ = []
+        for I in self.intersections:
+            if I.name != "I5" and I.name != "I6":
+                intersections_.append(I)
+        for n1, n2 in itertools.permutations(intersections_, 2):
             for t in range(0, 3600, dt):
                 W.adddemand(n1, n2, t, t + dt, random.uniform(0, demand))
 
@@ -253,9 +210,9 @@ class TrafficSim(gym.Env):
                 for l2 in self.OUTLINKS_press:
                     if l2.name.endswith(j.name) == 0:
                         out_press += l2.num_vehicles_queue
-                in_press *= 3
+                out_press /= (len(self.INLINKS_press) - 1)
                 pressure += abs(in_press - out_press)
-        reward -= (pressure/100)
+        reward -= (pressure/50)
     
         # check termination
         done = False
@@ -267,3 +224,23 @@ class TrafficSim(gym.Env):
         self.log_reward.append(reward)
 
         return observation, reward, done, {}, None
+
+    def make_link(self, W, n1, n2, length_0, free_flow_speed_0, jam_density_0, signal_group_a, signal_group_b):
+        W.addlink(
+            n1.name + n2.name,
+            n1,
+            n2,
+            length=length_0,
+            free_flow_speed=free_flow_speed_0,
+            jam_density=jam_density_0,
+            signal_group=signal_group_a,
+        )
+        W.addlink(
+            n2.name + n1.name,
+            n2,
+            n1,
+            length=length_0,
+            free_flow_speed=free_flow_speed_0,
+            jam_density=jam_density_0,
+            signal_group=signal_group_b,
+        )
