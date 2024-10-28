@@ -48,18 +48,22 @@ class TrafficSim(gym.Env):
 
         # network definition
         inf = float("inf")
+        is_first_row = True
         self.intersections = []
-        self.intersections.append(W.addNode("I0", 0, 0, signal=[inf, inf]))
-        self.intersections.append(W.addNode("I1", 1, 0, signal=[inf, inf]))
-        self.intersections.append(W.addNode("I2", 2, 0, signal=[inf, inf]))
-        self.intersections.append(W.addNode("I3", 3, 0, signal=[inf, inf]))
-        self.intersections.append(W.addNode("I4", 0, -2, signal=[inf, inf]))
-        self.intersections.append(W.addNode("I5", 2, -1, signal=[inf, inf]))
-        self.intersections.append(W.addNode("I6", 2, -2, signal=[inf, inf]))
-        self.intersections.append(W.addNode("I7", 3, -2, signal=[inf, inf]))
-        self.intersections.append(W.addNode("I8", 0, -3, signal=[inf, inf]))
-        self.intersections.append(W.addNode("I9", 2, -3, signal=[inf, inf]))
-        self.intersections.append(W.addNode("I10", 3, -3, signal=[inf, inf]))
+        with open("nodes.csv") as f:
+            reader = csv.reader(f)
+            for row in reader:
+                if is_first_row:
+                    is_first_row = False
+                    continue
+                self.intersections.append(
+                    W.addNode(
+                        f"I{row[0]}",
+                        int(row[1]),
+                        abs(1800 - int(row[2])),
+                        signal=[inf, inf],
+                    )
+                )
 
         self.nodes = []
         self.nodes.append(W.addNode("N0", 0, -1, signal=[inf, inf]))
@@ -92,7 +96,7 @@ class TrafficSim(gym.Env):
                     int(row[5]),
                     int(row[6]),
                 )
-        #makelink_node
+        # makelink_node
         is_first_row = True
         with open("dat2.csv") as f:
             reader = csv.reader(f)
@@ -113,7 +117,7 @@ class TrafficSim(gym.Env):
         # random demand definition
         dt = 30
         demand = 0.22
-        '''
+        """
         intersections_ = []
         for I in self.intersections:
             if I.name != "I5" and I.name != "I6":
@@ -121,7 +125,7 @@ class TrafficSim(gym.Env):
         for n1, n2 in itertools.permutations(intersections_, 2):
             for t in range(0, 3600, dt):
                 W.adddemand(n1, n2, t, t + dt, random.uniform(0, demand))
-        '''
+        """
         intersections_ = []
         for I in self.nodes:
             intersections_.append(I)
