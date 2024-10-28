@@ -224,8 +224,7 @@ class TrafficSim(gym.Env):
         observation = np.array(self.comp_state())
 
         # compute reward
-        total_rewards = 2
-        reward = 0
+        total_rewards = 3
         rewards = [0 for _ in range(total_rewards)]
 
         ## reward 1: negative ratio of difference of total waiting vehicles
@@ -243,6 +242,22 @@ class TrafficSim(gym.Env):
 
         ## reward 2: signal points
         rewards[1] = (signal_points / self.intersections_num) * 100
+
+        # reward 3: pressure
+        pressure = 0
+        for i in range(self.intersections_num):  # i is checking node
+            self.INLINKS_press = list(self.intersections[i].inlinks.values())
+            self.OUTLINKS_press = list(self.intersections[i].outlinks.values())
+            for l1 in self.INLINKS_press:
+                j = l1.start_node  # j->i is checking line
+                in_press = l1.num_vehicles_queue
+                out_press = 0
+                for l2 in self.OUTLINKS_press:
+                    if l2.name.endswith(j.name) == 0:
+                        out_press += l2.num_vehicles_queue
+                in_press *= 3
+                pressure += abs(in_press - out_press)
+        rewards[2] = -pressure / 100
 
         reward = sum([rewards[a - 1] for a in rewards_num])
 
