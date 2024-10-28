@@ -195,7 +195,7 @@ class TrafficSim(gym.Env):
 
         # set signal
         signal_points = 0
-        max_point = 30
+        # max_point = 30
         for i in range(self.intersections_num):
             new_phase = int(binstr[self.intersections_num - i - 1])
             new_time = self.current_step * operation_timestep_width
@@ -203,12 +203,14 @@ class TrafficSim(gym.Env):
             if new_phase != self.intersections[i].signal_phase:
                 delta_time = new_time - self.last_phase_change_time[i]
                 self.last_phase_change_time[i] = new_time
-                if delta_time < max_point:
-                    point = delta_time / max_point
-                elif delta_time < 2 * max_point:
-                    point = 1
-                elif delta_time < 3 * max_point:
-                    point = 1 - (delta_time - 2 * max_point) / max_point
+                # if delta_time < max_point:
+                #     point = delta_time / max_point
+                # elif delta_time < 2 * max_point:
+                #     point = 1
+                # elif delta_time < 3 * max_point:
+                #     point = 1 - (delta_time - 2 * max_point) / max_point
+                if delta_time < 10 or 60 < delta_time:
+                    point = -1
                 signal_points += point
                 # print(f"point: {point}, delta_time: {delta_time}")
             self.intersections[i].signal_phase = new_phase

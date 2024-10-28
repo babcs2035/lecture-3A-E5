@@ -11,6 +11,7 @@ from environment import *
 
 env = TrafficSim()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("device:", device)
 Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
 steps_done = 0
 

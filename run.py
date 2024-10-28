@@ -12,10 +12,10 @@ num_array = [int(i) for i in args[1:]]
 savefile_prefix = "_reward" + "".join([str(i) for i in num_array])
 os.makedirs(f"./out{savefile_prefix}", exist_ok=True)
 print("rewards:", num_array)
-print("savefile_prefix:", savefile_prefix)
+print("savefile_prefix:", savefile_prefix, "\n")
 # sys.stdout = open(f"./out{savefile_prefix}/.out", "w")
 
-num_episodes = 1024
+num_episodes = 256
 # num_episodes = 1
 
 log_states = []
@@ -80,8 +80,8 @@ for i_episode in range(num_episodes):
                 env.W.analyzer.macroscopic_fundamental_diagram()
                 env.W.analyzer.time_space_diagram_traj_links(
                     [["W1I1", "I1I2", "I2E1"], ["N1I1", "I1I3", "I3S1"]],
-                    figsize=(12, 3),
-                    xlim=[3500, 4000],
+                    figsize=(48, 3),
+                    # xlim=[3500, 4000],
                 )
                 for t in list(range(0, env.W.TMAX, int(env.W.TMAX / 4))):
                     env.W.analyzer.network(
@@ -91,6 +91,7 @@ for i_episode in range(num_episodes):
                 plt.plot(log_epi_average_delay, "r.")
                 plt.xlabel("episode")
                 plt.ylabel("average delay (s)")
+                plt.ylim(0, 800)
                 plt.grid()
                 plt.savefig(f"out{savefile_prefix}/log_epi_average_delay.png")
             else:
@@ -102,5 +103,11 @@ for i_episode in range(num_episodes):
         plt.plot(log_epi_average_delay, "r.")
         plt.xlabel("episode")
         plt.ylabel("average delay (s)")
+        plt.ylim(0, 800)
         plt.grid()
         plt.savefig(f"out{savefile_prefix}/log_epi_average_delay.png")
+
+    if i_episode == num_episodes - 1:
+        with open(f"out{savefile_prefix}/log_epi_average_delay.txt", "w") as f:
+            for item in log_epi_average_delay:
+                f.write(f"{item}\n")
