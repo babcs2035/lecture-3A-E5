@@ -81,7 +81,7 @@ class TrafficSim(gym.Env):
         with open('dat.csv') as f:
             reader = csv.reader(f)
             for row in reader:
-                self.make_link(W, row[0], row[1], row[2], row[3], row[4], row[5], row[6])
+                self.make_link(W, self.intersections[int(row[0])], self.intersections[int(row[1])], int(row[2]), int(row[3]), int(row[4]), int(row[5]), int(row[6]))
 
         # random demand definition
         dt = 30
@@ -144,7 +144,7 @@ class TrafficSim(gym.Env):
 
         # change signal by action
         # decode action
-        binstr = f"{action_index:04b}"
+        binstr = f"{action_index:011b}"
 
         # set signal
         signal_points = 0
@@ -226,21 +226,21 @@ class TrafficSim(gym.Env):
         return observation, reward, done, {}, None
 
     def make_link(self, W, n1, n2, length_0, free_flow_speed_0, jam_density_0, signal_group_a, signal_group_b):
-        W.addlink(
+        W.addLink(
             n1.name + n2.name,
             n1,
             n2,
             length=length_0,
             free_flow_speed=free_flow_speed_0,
-            jam_density=jam_density_0,
+            jam_density=jam_density_0 * 0.2,
             signal_group=signal_group_a,
         )
-        W.addlink(
+        W.addLink(
             n2.name + n1.name,
             n2,
             n1,
             length=length_0,
             free_flow_speed=free_flow_speed_0,
-            jam_density=jam_density_0,
+            jam_density=jam_density_0 * 0.2,
             signal_group=signal_group_b,
         )
