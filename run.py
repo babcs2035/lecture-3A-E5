@@ -19,7 +19,7 @@ print("rewards:", num_array)
 print("savefile_prefix:", savefile_prefix, "\n")
 # sys.stdout = open(f"./out{savefile_prefix}/.out", "w")
 
-num_episodes = 256
+num_episodes = 128
 
 log_epi_average_delay = []
 best_average_delay = 9999999999999999999999999
@@ -115,8 +115,6 @@ def train_marl(env):
             plt.ylim(0, 800)
             plt.grid()
             plt.savefig(f"out{savefile_prefix}/log_epi_average_delay.png")
-
-        if i_episode == num_episodes - 1:
             with open(f"out{savefile_prefix}/log_epi_average_delay.txt", "w") as f:
                 for item in log_epi_average_delay:
                     f.write(f"{item}\n")
