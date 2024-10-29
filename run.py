@@ -15,7 +15,7 @@ print("rewards:", num_array)
 print("savefile_prefix:", savefile_prefix, "\n")
 # sys.stdout = open(f"./out{savefile_prefix}/.out", "w")
 
-num_episodes = 256
+num_episodes = 128
 # num_episodes = 1
 
 log_states = []
@@ -83,10 +83,17 @@ for i_episode in range(num_episodes):
                     figsize=(48, 3),
                     # xlim=[3500, 4000],
                 )
-                for t in list(range(0, env.W.TMAX, int(env.W.TMAX / 4))):
-                    env.W.analyzer.network(
-                        t, detailed=1, network_font_size=0, figsize=(4, 4)
-                    )
+                # for t in list(range(0, env.W.TMAX, int(env.W.TMAX / 4))):
+                #     env.W.analyzer.network(
+                #         t, detailed=1, network_font_size=0, figsize=(4, 4)
+                #     )
+                env.W.analyzer.network_anim(
+                    animation_speed_inverse=5,
+                    timestep_skip=64,
+                    detailed=1,
+                    network_font_size=0,
+                    figsize=(4, 4),
+                )
                 plt.figure(figsize=(8, 6))
                 plt.plot(log_epi_average_delay, "r.")
                 plt.xlabel("episode")
