@@ -223,7 +223,7 @@ class TrafficSim(gym.Env):
         else:
             delta_queue_veh_ratio = delta_n_queue_veh / total_vehicle
         self.n_queue_veh_old = self.comp_n_veh_queue()
-        rewards[0] = -delta_queue_veh_ratio * 10000
+        rewards[0] = -delta_queue_veh_ratio * 100
 
         ## reward 2: signal points
         rewards[1] = (signal_points / self.intersections_num) * 100
@@ -241,10 +241,13 @@ class TrafficSim(gym.Env):
                     if l2.name.endswith(j.name) == 0:
                         out_press += l2.num_vehicles_queue
                 out_press /= len(self.INLINKS_press) - 1
-                pressure += abs(in_press - out_press)
-        rewards[2] = -pressure
+                if total_vehicle == 0:
+                    pressure += 0
+                else:
+                    pressure += abs(in_press - out_press) / total_vehicle
+        rewards[2] = -pressure * 100
 
-        print(rewards)
+        # print(rewards)
         reward = sum([rewards[a - 1] for a in rewards_num])
 
         # check termination
