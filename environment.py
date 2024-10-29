@@ -5,9 +5,108 @@ import random
 import itertools
 import csv
 import sys
+import torch
+from dqn import *
 
 args = sys.argv
 rewards_num = [int(i) for i in args[1:]]
+
+
+class MARLTrafficEnv(gym.Env):
+    def __init__(self, base_env):
+        super().__init__()
+        self.base_env = base_env
+        self.num_agents = self.base_env.intersections_num
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        # 各エージェントの観測・行動空間の定義
+        self.n_actions_per_agent = 2  # 各信号機は2状態
+        self.n_observations_per_agent = 4  # 各交差点の入力リンクの状態
+
+        # エージェントのセットアップ
+        self.agents = [
+            DQNAgent(
+                n_observations=self.n_observations_per_agent,
+                n_actions=self.n_actions_per_agent,
+                device=self.device,
+                agent_id=i,
+            )
+            for i in range(self.num_agents)
+        ]
+
+    def get_agent_observation(self, global_state, agent_id):
+        """個々のエージェントの観測を抽出"""
+        intersection = self.base_env.intersections[agent_id]
+        inlinks = list(intersection.inlinks.values())
+        obs = []
+        for link in inlinks:
+            obs.append(link.num_vehicles_queue)
+        # 4リンクに満たない場合は0でパディング
+        while len(obs) < 4:
+            obs.append(0)
+        return torch.tensor(obs, dtype=torch.float32, device=self.device).unsqueeze(0)
+
+    def get_agent_reward(self, global_reward, agent_id):
+        """個々のエージェントの報酬を計算"""
+        intersection = self.base_env.intersections[agent_id]
+
+        # ローカルな待ち行列の変化
+        local_queue = sum(
+            link.num_vehicles_queue for link in intersection.inlinks.values()
+        )
+        queue_reward = -local_queue / 100.0
+
+        # 信号切り替えペナルティ
+        phase_change_reward = 0
+        if (
+            hasattr(self, "last_phase")
+            and self.last_phase[agent_id] != intersection.signal_phase
+        ):
+            phase_change_reward = -1
+
+        # 圧力報酬
+        pressure = 0
+        inlinks = list(intersection.inlinks.values())
+        outlinks = list(intersection.outlinks.values())
+        for inlink in inlinks:
+            in_pressure = inlink.num_vehicles_queue
+            out_pressures = [link.num_vehicles_queue for link in outlinks]
+            pressure += abs(in_pressure - (sum(out_pressures) / len(outlinks)))
+        pressure_reward = -pressure / 100.0
+
+        return queue_reward + phase_change_reward + pressure_reward
+
+    def step(self, actions):
+        """環境のステップ実行"""
+        # アクションの結合
+        combined_action = 0
+        for i, action in enumerate(actions):
+            combined_action |= action << i
+
+        # 基本環境でステップ実行
+        global_next_state, global_reward, done, info, _ = self.base_env.step(
+            combined_action
+        )
+
+        # 各エージェントの観測と報酬を取得
+        observations = []
+        rewards = []
+        for i in range(self.num_agents):
+            obs = self.get_agent_observation(global_next_state, i)
+            reward = self.get_agent_reward(global_reward, i)
+            observations.append(obs)
+            rewards.append(torch.tensor([reward], device=self.device))
+
+        return observations, rewards, done, info
+
+    def reset(self):
+        """環境のリセット"""
+        global_state, _ = self.base_env.reset()
+        observations = []
+        for i in range(self.num_agents):
+            obs = self.get_agent_observation(global_state, i)
+            observations.append(obs)
+        return observations, None
 
 
 class TrafficSim(gym.Env):
@@ -116,7 +215,7 @@ class TrafficSim(gym.Env):
                 )
         # random demand definition
         dt = 30
-        demand = 0.18
+        demand = 0.22
         """
         intersections_ = []
         for I in self.intersections:
@@ -248,7 +347,7 @@ class TrafficSim(gym.Env):
         rewards[2] = -pressure * 100
 
         # print(rewards)
-        reward = sum([rewards[a - 1] for a in rewards_num])
+        reward = sum([rewards[a] for a in rewards_num])
 
         # check termination
         done = False
@@ -278,7 +377,7 @@ class TrafficSim(gym.Env):
             n2,
             length=length_0,
             free_flow_speed=free_flow_speed_0,
-            jam_density=jam_density_0 * 0.3,
+            jam_density=jam_density_0 * 0.2,
             signal_group=signal_group_a,
         )
         W.addLink(
@@ -287,6 +386,6 @@ class TrafficSim(gym.Env):
             n1,
             length=length_0,
             free_flow_speed=free_flow_speed_0,
-            jam_density=jam_density_0 * 0.3,
+            jam_density=jam_density_0 * 0.2,
             signal_group=signal_group_b,
         )
