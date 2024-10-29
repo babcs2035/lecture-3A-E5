@@ -19,7 +19,7 @@ print("rewards:", num_array)
 print("savefile_prefix:", savefile_prefix, "\n")
 # sys.stdout = open(f"./out{savefile_prefix}/.out", "w")
 
-num_episodes = 128
+num_episodes = 1
 
 log_epi_average_delay = []
 best_average_delay = 9999999999999999999999999
@@ -73,6 +73,10 @@ def train_marl(env):
         if average_delay < best_average_delay:
             print("current best episode!")
             best_average_delay = average_delay
+            best_agents = [agent.policy_net.state_dict() for agent in env.agents]
+            # 最良のモデルの保存
+            for i, state_dict in enumerate(best_agents):
+                torch.save(state_dict, f"out{savefile_prefix}/agent_{i}_best.pth")
 
             env.base_env.W.save_mode = True
             env.base_env.W.show_mode = False
@@ -122,6 +126,73 @@ def train_marl(env):
     return best_agents, log_rewards
 
 
+tests_num = 32
+
+
+# run test from imported models
+def run_test(env, best_agents):
+
+    os.makedirs(f"out{savefile_prefix}/test", exist_ok=True)
+    delays = []
+
+    for test_i in range(tests_num):
+        observations, _ = env.reset()
+        episode_rewards = [[] for _ in range(env.num_agents)]
+        # env.agents = []
+
+        for i, agent in enumerate(env.agents):
+            agent.policy_net.load_state_dict(best_agents[i])
+            agent.policy_net.eval()
+
+        while True:
+            actions = []
+            for i, agent in enumerate(env.agents):
+                action = agent.select_action(observations[i])
+                actions.append(action.item())
+
+            next_observations, rewards, done, _ = env.step(actions)
+
+            for i, agent in enumerate(env.agents):
+                episode_rewards[i].append(rewards[i].item())
+
+            if done:
+                break
+
+            observations = next_observations
+
+        average_delay = env.base_env.W.analyzer.average_delay
+        delays.append(average_delay)
+        print(f"test {test_i}: [{average_delay : .3f}]")
+
+        env.base_env.W.save_mode = True
+        env.base_env.W.show_mode = False
+        env.base_env.W.name = f"out{savefile_prefix}/test"
+        env.base_env.W.analyzer.print_simple_stats(force_print=True)
+        # env.base_env.W.analyzer.macroscopic_fundamental_diagram()
+        # env.base_env.W.analyzer.time_space_diagram_traj_links(
+        #     [
+        #         ["N0I0", "I0I4", "I4I8", "I8S8"],
+        #         ["N2I2", "I2I5", "I5I6", "I6I9", "I9S9"],
+        #         ["N3I3", "I3I7", "I7I10", "I10S10"],
+        #         ["N0I0", "I0I1", "I1I2", "I2I3", "I3E3"],
+        #         ["I4I6", "I6I7", "I7E7"],
+        #         ["W8I8", "I8I9", "I9I10", "I10E10"],
+        #     ],
+        #     figsize=(48, 3),
+        # )
+
+        plt.figure(figsize=(8, 6))
+        plt.plot(delays, "g.")
+        plt.xlabel("test")
+        plt.ylabel("average delay (s)")
+        plt.ylim(0, 800)
+        plt.grid()
+        plt.savefig(f"out{savefile_prefix}/test/delays.png")
+        with open(f"out{savefile_prefix}/test/delays.txt", "w") as f:
+            for item in delays:
+                f.write(f"{item}\n")
+
+
 # 環境の初期化
 base_env = TrafficSim()
 marl_env = MARLTrafficEnv(base_env)
@@ -131,4 +202,9 @@ best_agents, log_rewards = train_marl(marl_env)
 
 # 最良のモデルの保存
 for i, state_dict in enumerate(best_agents):
-    torch.save(state_dict, f"agent_{i}_best.pth")
+    torch.save(state_dict, f"out{savefile_prefix}/agent_{i}_best.pth")
+
+# run_test(
+#     marl_env,
+#     [torch.load(f"out{savefile_prefix}/agent_{i}_initial.pth") for i in range(11)],
+# )
